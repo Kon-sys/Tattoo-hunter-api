@@ -7,10 +7,15 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: time-service
+        - id: auth-service
           uri: http://localhost:8081
           predicates:
-            - Path=/api/time
+            - Path=/api/auth/**
+
+        - id: profile-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/profile/**
 
       # ????????? ?????? ? http://localhost:3000 ?????? ?? gateway
       globalcors:
@@ -25,3 +30,6 @@ spring:
             allowedHeaders:
               - "*"
             allowCredentials: true
+
+jwt:
+  secret: VGhpcy1pcy1hLXZlcnktbG9uZy1kZW1vLXNlY3JldC1rZXk=

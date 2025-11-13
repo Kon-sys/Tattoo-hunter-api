@@ -1,0 +1,77 @@
+package com.example.gatewayservice.security;
+
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import java.security.Key;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
+
+@Slf4j
+@Component
+public class JwtService {
+
+    @Value("${jwt.secret}")
+    private String jwtSecret;
+
+    public String getLoginFromToken(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(getSignInKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.getSubject();
+    }
+
+    public String getRoleFromToken(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(getSignInKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        return claims.get("role", String.class);
+    }
+
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parserBuilder()
+                    .setSigningKey(getSignInKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+            return true;
+        } catch (ExpiredJwtException e) {
+            log.error("Expired JwtException", e);
+        } catch (UnsupportedJwtException e) {
+            log.error("Unsupported JwtException", e);
+        } catch (MalformedJwtException e) {
+            log.error("Malformed JwtException", e);
+        } catch (SecurityException e) {
+            log.error("Security JwtException", e);
+        } catch (Exception e) {
+            log.error("Invalid token", e);
+        }
+        return false;
+    }
+
+    // этот метод тебе напрямую в gateway не нужен, но пусть будет для симметрии
+    public String generateJwtToken(String login, String role) {
+        Date date = Date.from(LocalDateTime.now().plusMinutes(10).atZone(ZoneId.systemDefault()).toInstant());
+        return Jwts.builder()
+                .setSubject(login)
+                .claim("role", role)
+                .setExpiration(date)
+                .signWith(getSignInKey())
+                .compact();
+    }
+
+    private Key getSignInKey() {
+        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
+}
