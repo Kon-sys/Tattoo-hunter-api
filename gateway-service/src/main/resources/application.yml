@@ -1,0 +1,27 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway-service
+  cloud:
+    gateway:
+      routes:
+        - id: time-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/time
+
+      # ????????? ?????? ? http://localhost:3000 ?????? ?? gateway
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:3000"
+            allowedMethods:
+              - GET
+              - POST
+              - OPTIONS
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
