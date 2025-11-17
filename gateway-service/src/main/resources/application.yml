@@ -32,4 +32,4 @@ spring:
             allowCredentials: true
 
 jwt:
-  secret: VGhpcy1pcy1hLXZlcnktbG9uZy1kZW1vLXNlY3JldC1rZXk=
+  secret: ${jwt_secret}
