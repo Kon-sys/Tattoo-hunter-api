@@ -54,6 +54,7 @@
             <version>6.5.2.Final</version>
         </dependency>
 
+        <!-- AWS S3 SDK (для Yandex Object Storage) -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>s3</artifactId>
