@@ -20,6 +20,7 @@
         <module>auth-service</module>
         <module>gateway-service</module>
         <module>profile-service</module>
+        <module>vacancy-service</module>
     </modules>
 
     <properties>

@@ -158,7 +158,7 @@ public class EmployeeProfileController {
     @PostMapping("/additional-info")
     public ResponseEntity<?> user_profile_additional_info(@RequestHeader("X-User-Login") String login,
                                                           @RequestHeader("X-User-Role") String role,
-                                                          @RequestBody Employee form) {
+                                                          @RequestBody EmployeeDTO form) {
 
         try {
             Employee employee = getEmployeeFromToken(login, role);

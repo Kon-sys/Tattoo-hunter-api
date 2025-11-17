@@ -26,6 +26,15 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
             "/api/auth/refresh"
     );
 
+    private static final List<String> companyEndpoints = List.of(
+            "/api/profile/company",
+            "api/vacancy"
+    );
+
+    private static final List<String> employeeEndpoints = List.of(
+            "/api/profile/profile"
+    );
+
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String path = exchange.getRequest().getPath().value();
@@ -53,15 +62,11 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         String login = jwtService.getLoginFromToken(token);
         String role = jwtService.getRoleFromToken(token);
 
-        if (path.startsWith("/api/profile/employee") && !"ROLE_EMPLOYEE".equals(role)) {
+        if(!startWith(path, role)){
             exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
             return exchange.getResponse().setComplete();
         }
 
-        if (path.startsWith("/api/profile/company") && !"ROLE_COMPANY".equals(role)) {
-            exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
-            return exchange.getResponse().setComplete();
-        }
 
         ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
                 .header("X-User-Login", login)
@@ -79,5 +84,19 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     public int getOrder() {
         // чем меньше число — тем раньше фильтр выполняется
         return -1;
+    }
+
+    private boolean startWith(String prefix, String role){
+        for(String employee : employeeEndpoints){
+            if(prefix.startsWith(employee) && "ROLE_EMPLOYEE".equals(role)){
+                return true;
+            }
+        }
+        for(String company : companyEndpoints){
+            if(prefix.startsWith(company) && "ROLE_COMPANY".equals(role)){
+                return true;
+            }
+        }
+        return false;
     }
 }

@@ -23,7 +23,7 @@ public class CompanyProfileController {
     @PostMapping
     public ResponseEntity<?> register_company(@RequestHeader("X-User-Login") String login,
                                               @RequestHeader("X-User-Role") String role,
-                                              @ModelAttribute Company form) {
+                                              @ModelAttribute CompanyDTO form) {
         if (!"ROLE_COMPANY".equals(role)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN) // 403
                     .body(Map.of(
