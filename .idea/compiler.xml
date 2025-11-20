@@ -10,6 +10,7 @@
         <module name="profile-service" />
         <module name="gateway-service" />
         <module name="vacancy-service" />
+        <module name="listing-vacancies-service" />
       </profile>
     </annotationProcessing>
   </component>
@@ -17,6 +18,7 @@
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="auth-service" options="-parameters" />
       <module name="gateway-service" options="-parameters" />
+      <module name="listing-vacancies-service" options="-parameters" />
       <module name="profile-service" options="-parameters" />
       <module name="vacancy-service" options="-parameters" />
     </option>

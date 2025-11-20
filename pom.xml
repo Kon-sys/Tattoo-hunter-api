@@ -21,6 +21,7 @@
         <module>gateway-service</module>
         <module>profile-service</module>
         <module>vacancy-service</module>
+        <module>listing-vacancies-service</module>
     </modules>
 
     <properties>
