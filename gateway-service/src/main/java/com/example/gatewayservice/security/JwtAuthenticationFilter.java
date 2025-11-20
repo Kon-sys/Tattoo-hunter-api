@@ -32,7 +32,8 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     );
 
     private static final List<String> employeeEndpoints = List.of(
-            "/api/profile/profile"
+            "/api/profile/employee",
+            "/api/vacancies"
     );
 
     @Override
