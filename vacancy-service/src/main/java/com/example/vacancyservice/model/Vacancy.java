@@ -20,7 +20,7 @@ public class Vacancy {
     @Column(nullable = false)
     private String title;
 
-    private String income_level;
+    private String incomeLevel;
 
     @Enumerated(EnumType.STRING)
     private Busy busy;
@@ -31,7 +31,7 @@ public class Vacancy {
     @Column(nullable = false)
     private WorkSchedule workSchedule;
 
-    private int working_hours;
+    private int workingHours;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -39,6 +39,6 @@ public class Vacancy {
 
     private String addInfo;
 
-    private String list_url;
+    private String listUrl;
 }
 
