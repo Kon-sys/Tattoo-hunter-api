@@ -21,9 +21,6 @@ public class User {
     @Column(nullable = false)
     private String login;
 
-    @Column(nullable = false)
-    private String password;
-
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Employee employee;
 
