@@ -66,11 +66,11 @@ public class VacancyController {
             Vacancy vacancy = new Vacancy();
             vacancy.setCompany(companyOpt.get());
             vacancy.setTitle(form.getTitle());
-            vacancy.setIncome_level(form.getIncomeLevel());
+            vacancy.setIncomeLevel(form.getIncomeLevel());
             vacancy.setBusy(form.getBusy());
             vacancy.setExperience(form.getExperience());
             vacancy.setWorkSchedule(form.getWorkSchedule());
-            vacancy.setWorking_hours(form.getWorkingHours());
+            vacancy.setWorkingHours(form.getWorkingHours());
             vacancy.setWorkType(form.getWorkType());
             vacancyService.save(vacancy);
 
@@ -123,7 +123,7 @@ public class VacancyController {
             }
 
             String url = uploadFileToS3(file);
-            vacancy.setList_url(url);
+            vacancy.setListUrl(url);
             vacancyService.save(vacancy);
             return ResponseEntity.ok(vacancyMapper.toDto(vacancy));
 
