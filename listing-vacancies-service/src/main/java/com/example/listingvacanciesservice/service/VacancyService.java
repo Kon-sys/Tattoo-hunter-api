@@ -1,6 +1,5 @@
 package com.example.listingvacanciesservice.service;
 
-import com.example.listingvacanciesservice.dto.VacancyDto;
 import com.example.listingvacanciesservice.dto.VacancyFilter;
 import com.example.listingvacanciesservice.model.Vacancy;
 import com.example.listingvacanciesservice.repo.VacancyRepository;
