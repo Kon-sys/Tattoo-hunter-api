@@ -57,15 +57,17 @@ public class VacancyController {
     @RequestMapping("/filter")
     public ResponseEntity<?> getFilteredVacancies(
             @RequestHeader("X_User_Role") String role,
-            @RequestParam(required = false) String income,               // "договорная" или "5000"
-            @RequestParam(required = false) Busy busy,                   // пример: ?busy=FULL_TIME
-            @RequestParam(required = false) WorkSchedule workSchedule,   // пример: ?workSchedule=FIVE_TWO
-            @RequestParam(required = false) WorkType workType,           // пример: ?workType=REMOTE
+            @RequestParam(required = false) String income,
+            @RequestParam(required = false) Busy busy,
+            @RequestParam(required = false) WorkSchedule workSchedule,
+            @RequestParam(required = false) WorkType workType,
             @RequestParam(required = false) Integer minExperience,
             @RequestParam(required = false) Integer maxExperience,
             @RequestParam(required = false) Integer minWorkingHours,
             @RequestParam(required = false) Integer maxWorkingHours,
-            @RequestParam(required = false) String companyName
+            @RequestParam(required = false) String companyName,
+            @RequestParam(required = false, defaultValue = "id") String sortBy,
+            @RequestParam(required = false, defaultValue = "asc") String sortDir
     ) {
 
         if (!"ROLE_EMPLOYEE".equals(role)) {
@@ -83,7 +85,7 @@ public class VacancyController {
         filter.setMinWorkingHours(minWorkingHours);
         filter.setMaxWorkingHours(maxWorkingHours);
 
-        List<Vacancy> vacancies = vacancyService.getVacanciesFiltered(filter);
+        List<Vacancy> vacancies = vacancyService.getVacanciesFiltered(filter, sortBy, sortDir);
 
         return ResponseEntity.ok(vacancies.stream()
                 .map(vacancyMapper::toDto)
