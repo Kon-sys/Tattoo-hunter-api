@@ -1,5 +1,6 @@
 package com.example.authservice.service;
 
+import com.example.authservice.dto.UserInfoDto;
 import com.example.authservice.exception.UserAlreadyExistsException;
 import com.example.authservice.model.Role;
 import com.example.authservice.model.User;
@@ -71,5 +72,43 @@ public class UserService {
 
     public boolean isExistsByLogin(String login) {
         return userRepository.existsByLogin(login);
+    }
+
+    public UserInfoDto getUserInfoByLogin(String login) {
+
+        Optional<User> userOpt = findByLogin(login);
+
+        if(userOpt.isEmpty()){
+            throw new IllegalArgumentException("User not found");
+        }
+
+        User user = userOpt.get();
+
+        UserInfoDto dto = new UserInfoDto();
+        dto.setId(user.getId());
+        dto.setLogin(user.getLogin());
+        dto.setRole(user.getRole().name());
+
+        // 👉 тут как раз «привязка к employee/company»
+        // Вариант 1: если в User есть связи:
+        //  @OneToOne(mappedBy = "user")
+        //  private Employee employee;
+        //  private Company company;
+        //
+        // тогда:
+        /*
+        if (user.getEmployee() != null) {
+            dto.setEmployeeId(user.getEmployee().getId());
+        }
+        if (user.getCompany() != null) {
+            dto.setCompanyId(user.getCompany().getId());
+        }
+        */
+
+        // Вариант 2: если этих связей пока нет — временно оставляем null
+        dto.setEmployeeId(null);
+        dto.setCompanyId(null);
+
+        return dto;
     }
 }

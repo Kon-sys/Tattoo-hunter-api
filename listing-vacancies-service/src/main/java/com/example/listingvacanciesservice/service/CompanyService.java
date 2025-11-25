@@ -17,4 +17,10 @@ public class CompanyService {
     public List<Company> findAll(){
         return companyRepository.findAll();
     }
+
+    public Company findByName(String name) {
+        Optional<Company> companyOpt = companyRepository.findByName(name);
+        return companyOpt.orElse(null);
+
+    }
 }

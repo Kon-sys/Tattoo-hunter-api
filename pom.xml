@@ -22,6 +22,8 @@
         <module>profile-service</module>
         <module>vacancy-service</module>
         <module>listing-vacancies-service</module>
+        <module>applications-service</module>
+        <module>chat-service</module>
     </modules>
 
     <properties>

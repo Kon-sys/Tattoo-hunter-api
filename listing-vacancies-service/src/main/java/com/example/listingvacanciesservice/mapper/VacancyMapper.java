@@ -2,25 +2,30 @@ package com.example.listingvacanciesservice.mapper;
 
 import com.example.listingvacanciesservice.dto.VacancyDto;
 import com.example.listingvacanciesservice.model.Vacancy;
+import com.example.listingvacanciesservice.service.CompanyService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class VacancyMapper {
+
+    private final CompanyService companyService;
 
     //Vacancy → VacancyDto
     public VacancyDto toDto(Vacancy vacancy) {
         VacancyDto dto = new VacancyDto();
         dto.setId(vacancy.getId());
         dto.setTitle(vacancy.getTitle());
-        dto.setIncomeLevel(vacancy.getIncome_level());
+        dto.setIncomeLevel(vacancy.getIncomeLevel());
         dto.setBusy(vacancy.getBusy());
         dto.setExperience(vacancy.getExperience());
         dto.setWorkSchedule(vacancy.getWorkSchedule());
-        dto.setWorkingHours(vacancy.getWorking_hours());
+        dto.setWorkingHours(vacancy.getWorkingHours());
         dto.setWorkType(vacancy.getWorkType());
         dto.setAddInfo(vacancy.getAddInfo());
-        dto.setListUrl(vacancy.getList_url());
-        dto.setCompanyName(vacancy.getCompanyName());
+        dto.setListUrl(vacancy.getListUrl());
+        dto.setCompanyName(vacancy.getCompany().getName());
 
         return dto;
     }
@@ -29,15 +34,15 @@ public class VacancyMapper {
     public Vacancy toEntity(VacancyDto dto) {
         Vacancy vacancy = new Vacancy();
         vacancy.setTitle(dto.getTitle());
-        vacancy.setIncome_level(dto.getIncomeLevel());
+        vacancy.setIncomeLevel(dto.getIncomeLevel());
         vacancy.setBusy(dto.getBusy());
         vacancy.setExperience(dto.getExperience());
         vacancy.setWorkSchedule(dto.getWorkSchedule());
-        vacancy.setWorking_hours(dto.getWorkingHours());
+        vacancy.setWorkingHours(dto.getWorkingHours());
         vacancy.setWorkType(dto.getWorkType());
         vacancy.setAddInfo(dto.getAddInfo());
-        vacancy.setList_url(dto.getListUrl());
-        vacancy.setCompanyName(dto.getCompanyName());
+        vacancy.setListUrl(dto.getListUrl());
+        vacancy.setCompany(companyService.findByName(dto.getCompanyName()));
         return vacancy;
     }
 }

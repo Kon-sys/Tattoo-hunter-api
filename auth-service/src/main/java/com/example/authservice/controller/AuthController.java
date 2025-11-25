@@ -3,6 +3,7 @@ package com.example.authservice.controller;
 
 import com.example.authservice.dto.JwtAuthenticationDto;
 import com.example.authservice.dto.RegisterRequest;
+import com.example.authservice.dto.UserInfoDto;
 import com.example.authservice.exception.UserAlreadyExistsException;
 import com.example.authservice.model.User;
 import com.example.authservice.security.JwtService;
@@ -61,6 +62,12 @@ public class AuthController {
         );
 
         return ResponseEntity.ok(tokens);
+    }
+
+    @GetMapping("/by-login")
+    public ResponseEntity<UserInfoDto> getUserByLogin(@RequestParam String login) {
+        UserInfoDto userInfo = userService.getUserInfoByLogin(login);
+        return ResponseEntity.ok(userInfo);
     }
 
     @PostMapping("/refresh")
