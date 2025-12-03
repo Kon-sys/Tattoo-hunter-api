@@ -29,8 +29,14 @@ public class AuthController {
     @PostMapping("/sign-up")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
         try {
-            if(request.getLogin() == null || request.getPassword() == null || request.getRole() == null) {
-                return  ResponseEntity.badRequest().body("Заполните все поля");
+            if("".equals(request.getLogin())) {
+                return  ResponseEntity.badRequest().body("Login cannot be empty");
+            }
+            if(request.getPassword() == null) {
+                return  ResponseEntity.badRequest().body("Password cannot be empty");
+            }
+            if(request.getRole() == null) {
+                return  ResponseEntity.badRequest().body("Choose your role");
             }
 
             User user = userService.registerUserWithRole(

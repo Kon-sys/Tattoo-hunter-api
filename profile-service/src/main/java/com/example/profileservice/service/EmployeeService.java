@@ -1,6 +1,7 @@
 package com.example.profileservice.service;
 
 import com.example.profileservice.model.Employee;
+import com.example.profileservice.model.User;
 import com.example.profileservice.repo.EmployeeRepository;
 import com.example.profileservice.repo.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,11 @@ public class EmployeeService {
     }
 
     public Optional<Employee> findByUserLogin(String userLogin) {
-        return employeeRepository.findByUserId(userRepository.findByLogin(userLogin).getId());
+        User user = userRepository.findByLogin(userLogin);
+        if (user == null) {
+            return Optional.empty();
+        }
+        System.out.println(user.getLogin());
+        return employeeRepository.findByUser(user);
     }
 }

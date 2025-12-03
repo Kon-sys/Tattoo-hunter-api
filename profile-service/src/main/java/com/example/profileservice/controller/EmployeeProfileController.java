@@ -92,6 +92,10 @@ public class EmployeeProfileController {
                                                @RequestHeader("X-User-Role") String role,
                                                @RequestBody WorkCategoriesRequest request) {
 
+        System.out.println("LOGIN = " + login);
+        System.out.println("ROLE  = " + role);
+        System.out.println("CATS  = " + request.getWorkCategories());
+
         try {
             Employee employee = getEmployeeFromToken(login, role);
             employee.setWorkCategories(request.getWorkCategories());
@@ -289,6 +293,53 @@ public class EmployeeProfileController {
 
         return props.getEndpoint() + "/" + props.getBucket() + "/" + key;
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentEmployee(
+            @RequestHeader("X-User-Login") String login,
+            @RequestHeader("X-User-Role") String role
+    ) {
+        try {
+            Employee employee = getEmployeeFromToken(login, role);
+
+            EmployeeDTO dto = new EmployeeDTO();
+            dto.setId(employee.getId());
+            dto.setUserId(
+                    employee.getUser() != null ? employee.getUser().getId() : null
+            );
+            dto.setFirstName(employee.getFirstName());
+            dto.setLastName(employee.getLastName());
+            dto.setFatherName(employee.getFatherName());
+            dto.setBirthDate(employee.getBirthDate());
+            dto.setGender(employee.getGender());
+            dto.setCity(employee.getCity());
+            dto.setExperience(employee.getExperience());
+            dto.setPhone(employee.getPhone());
+            dto.setEmail(employee.getEmail());
+            dto.setTelegram(employee.getTelegram());
+            dto.setWorkCategories(employee.getWorkCategories());
+            dto.setAddInfo(employee.getAddInfo());
+            dto.setMainPhoto(employee.getMainPhoto());
+            dto.setResume(employee.getResume());
+
+            return ResponseEntity.ok(dto);
+        }
+        catch (RoleException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of(
+                            "error", "INVALID_ROLE",
+                            "message", e.getMessage()
+                    ));
+        }
+        catch (UnauthorizedException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of(
+                            "error", "EMPLOYEE_NOT_FOUND",
+                            "message", e.getMessage()
+                    ));
+        }
+    }
+
 
 }
 

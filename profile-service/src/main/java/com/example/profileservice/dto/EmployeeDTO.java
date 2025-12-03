@@ -17,7 +17,7 @@ public class EmployeeDTO {
     private LocalDate birthDate;
     private Gender gender;
     private String city;
-    private int experience;
+    private Integer experience;
     private String phone;
     private String email;
     private String telegram;

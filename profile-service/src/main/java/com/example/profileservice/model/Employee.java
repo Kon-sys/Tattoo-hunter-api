@@ -36,7 +36,7 @@ public class Employee {
 
     private String city;
 
-    private int experience;
+    private Integer experience;
 
     private String phone;
 
