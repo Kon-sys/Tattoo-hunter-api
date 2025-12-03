@@ -1,5 +1,6 @@
 package com.example.authservice.service;
 
+import com.example.authservice.dto.CountersDto;
 import com.example.authservice.dto.UserInfoDto;
 import com.example.authservice.exception.UserAlreadyExistsException;
 import com.example.authservice.model.Role;
@@ -9,6 +10,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,11 +32,11 @@ public class UserService {
         user.setPassword(rawPassword);
         user.setRole(role);
 
-        try {
-            user = userRepository.save(user); //DataIntegrityViolationException
-        } catch (DataIntegrityViolationException e) {
-            throw new UserAlreadyExistsException("User with this login already exists");
+        if(findByLogin(login).isPresent()) {
+            throw new UserAlreadyExistsException("User with login " + login + " already exists");
         }
+
+        user = userRepository.save(user);
 
         createRole(user.getLogin(), user.getRole());
         return user;
@@ -110,5 +112,25 @@ public class UserService {
         dto.setCompanyId(null);
 
         return dto;
+    }
+
+    private final JdbcTemplate jdbcTemplate;
+
+    // ... остальные методы
+
+    public CountersDto getCounters() {
+        long employees = userRepository.countByRole(Role.ROLE_EMPLOYEE);
+        long companies = userRepository.countByRole(Role.ROLE_COMPANY);
+
+        Long vacancies = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM vacancy", // <-- тут имя твоей таблицы
+                Long.class
+        );
+
+        return new CountersDto(
+                employees,
+                companies,
+                vacancies != null ? vacancies : 0L
+        );
     }
 }

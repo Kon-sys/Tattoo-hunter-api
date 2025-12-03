@@ -1,6 +1,7 @@
 package com.example.authservice.controller;
 
 
+import com.example.authservice.dto.CountersDto;
 import com.example.authservice.dto.JwtAuthenticationDto;
 import com.example.authservice.dto.RegisterRequest;
 import com.example.authservice.dto.UserInfoDto;
@@ -9,6 +10,7 @@ import com.example.authservice.model.User;
 import com.example.authservice.security.JwtService;
 import com.example.authservice.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,6 +29,10 @@ public class AuthController {
     @PostMapping("/sign-up")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
         try {
+            if(request.getLogin() == null || request.getPassword() == null || request.getRole() == null) {
+                return  ResponseEntity.badRequest().body("Заполните все поля");
+            }
+
             User user = userService.registerUserWithRole(
                     request.getLogin(),
                     passwordEncoder.encode(request.getPassword()),
@@ -73,5 +79,20 @@ public class AuthController {
     @PostMapping("/refresh")
     public JwtAuthenticationDto refresh (@RequestBody JwtAuthenticationDto refreshToken) throws Exception {
         return jwtService.refreshToken(refreshToken);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader
+    ) {
+        // здесь можно добавить логику занесения токена в blacklist, если понадобится
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+
+    @GetMapping("/counters")
+    public ResponseEntity<CountersDto> getCounters() {
+        CountersDto counters = userService.getCounters();
+        return ResponseEntity.ok(counters);
     }
 }

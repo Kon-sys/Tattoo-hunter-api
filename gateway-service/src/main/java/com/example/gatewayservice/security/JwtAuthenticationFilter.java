@@ -23,7 +23,8 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     private static final List<String> openApiEndpoints = List.of(
             "/api/auth/sign-in",
             "/api/auth/sign-up",
-            "/api/auth/refresh"
+            "/api/auth/refresh",
+            "/api/auth/counters"
     );
 
     private static final List<String> companyEndpoints = List.of(
