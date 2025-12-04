@@ -1,3 +1,4 @@
+// chat-service/src/main/java/.../service/ChatService.java
 package com.example.chatservice.service;
 
 import com.example.chatservice.model.Chat;
@@ -10,7 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -18,6 +20,7 @@ public class ChatService {
 
     private final ChatRepository chatRepository;
     private final MessageRepository messageRepository;
+    private final MessageCacheService messageCacheService;
 
     @Transactional
     public Chat openOrGetChat(String employeeLogin, Long companyId, Long vacancyId) {
@@ -53,13 +56,45 @@ public class ChatService {
         msg.setText(text);
         msg.setCreatedAt(LocalDateTime.now());
 
-        return messageRepository.save(msg);
+        Message saved = messageRepository.save(msg);
+
+        // 🔥 положили ID сообщения в Redis
+        //messageCacheService.pushMessage(saved);
+
+        return saved;
     }
 
     public List<Message> getMessages(Long chatId) {
         Chat chat = chatRepository.findById(chatId)
                 .orElseThrow(() -> new IllegalArgumentException("Chat not found"));
 
-        return messageRepository.findByChatOrderByCreatedAtAsc(chat);
+//        // 1. Пробуем взять IDs из Redis
+//        List<Long> ids = messageCacheService.getMessageIds(chatId);
+//        if (!ids.isEmpty()) {
+//            List<Message> fromCache = messageRepository.findAllById(ids);
+//
+//            if (!fromCache.isEmpty()) {
+//                // восстановим порядок по списку ids
+//                Map<Long, Message> map = fromCache.stream()
+//                        .collect(Collectors.toMap(Message::getId, m -> m));
+//
+//                List<Message> ordered = new ArrayList<>();
+//                for (Long id : ids) {
+//                    Message m = map.get(id);
+//                    if (m != null) {
+//                        ordered.add(m);
+//                    }
+//                }
+//                return ordered;
+//            }
+//        }
+
+        // 2. Если в Redis пусто / не получилось — читаем из БД
+        List<Message> fromDb = messageRepository.findByChatOrderByCreatedAtAsc(chat);
+
+        // 3. Прогреваем кэш
+        messageCacheService.warmCache(chatId, fromDb);
+
+        return fromDb;
     }
 }

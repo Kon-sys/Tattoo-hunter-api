@@ -32,7 +32,8 @@ public class ResponseService {
 
         ResponseApplication saved = responseRepository.save(app);
 
-        notificationService.addNewResponseForCompany(companyId, saved.getId());
+        // ✅ кладём id отклика в Redis-список компании
+        notificationService.addResponseForCompany(saved);
 
         return saved;
     }
@@ -41,8 +42,29 @@ public class ResponseService {
         return responseRepository.findByEmployeeLogin(employeeLogin);
     }
 
+    @Transactional(readOnly = true)
     public List<ResponseApplication> getCompanyResponses(Long companyId, ResponseStatus status) {
-        return responseRepository.findByCompanyIdAndStatus(companyId, status);
+        // 1. Пытаемся взять список id из Redis
+        var idsFromRedis = notificationService.getCompanyResponseIds(companyId);
+
+        if (idsFromRedis != null && !idsFromRedis.isEmpty()) {
+            // ⚠️ важно: не делаем findById в цикле, а одной операцией
+            List<ResponseApplication> cached = responseRepository.findAllById(idsFromRedis);
+
+            return cached.stream()
+                    .filter(a -> companyId.equals(a.getCompanyId()))
+                    .filter(a -> status == null || a.getStatus() == status)
+                    .toList();
+        }
+
+        // 2. Если кэш пуст — читаем из БД
+        List<ResponseApplication> fromDb =
+                responseRepository.findByCompanyIdAndStatus(companyId, status);
+
+        // 3. Прогреваем кэш на будущее
+        notificationService.warmCompanyCache(companyId, fromDb);
+
+        return fromDb;
     }
 
     @Transactional
@@ -59,7 +81,6 @@ public class ResponseService {
 
         return saved;
     }
-
 
     @Transactional
     public ResponseApplication rejectResponse(Long responseId) {

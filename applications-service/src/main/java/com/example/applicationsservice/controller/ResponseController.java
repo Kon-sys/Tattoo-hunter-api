@@ -72,9 +72,6 @@ public class ResponseController {
             return ResponseEntity.badRequest().body("Only company can view responses");
         }
 
-        // тут теоретически нужно проверять, что логин реально связан с этой companyId,
-        // но у тебя пока нет связи – поэтому просто фильтруем по companyId
-
         List<ResponseApplicationDto> result = responseService
                 .getCompanyResponses(companyId, status)
                 .stream()
@@ -83,6 +80,7 @@ public class ResponseController {
 
         return ResponseEntity.ok(result);
     }
+
 
     // компания одобряет отклик (чат создадим уже в chat-service)
     @PostMapping("/{id}/approve")

@@ -19,4 +19,6 @@ public class VacancyDto {
     private String addInfo;
     private String listUrl;
     private String companyName;
+
+    private Long companyId;
 }

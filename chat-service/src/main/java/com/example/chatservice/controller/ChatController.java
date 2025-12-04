@@ -92,6 +92,10 @@ public class ChatController {
                 .map(MessageDto::from)
                 .toList();
 
+        for (MessageDto messageDto : result) {
+            System.out.println(messageDto);
+        }
+
         return ResponseEntity.ok(result);
     }
 
@@ -107,7 +111,7 @@ public class ChatController {
     ) {
         UserInfoDto user = authClient.getUserByLogin(login);
         if (user == null) {
-            return ResponseEntity.badRequest().body("Unknown user");
+            return ResponseEntity.badRequest().body("Unknown user: " + login);
         }
 
         SenderRole senderRole;
@@ -116,12 +120,20 @@ public class ChatController {
         } else if ("ROLE_COMPANY".equals(user.getRole())) {
             senderRole = SenderRole.COMPANY;
         } else {
-            return ResponseEntity.badRequest().body("Unknown role");
+            return ResponseEntity.badRequest().body("Unknown role: " + user.getRole());
         }
 
-        Message msg = chatService.sendMessage(chatId, login, senderRole, request.getText());
-        return ResponseEntity.ok(MessageDto.from(msg));
+        try {
+            Message msg = chatService.sendMessage(chatId, login, senderRole, request.getText());
+            return ResponseEntity.ok(MessageDto.from(msg));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(404).body(ex.getMessage());
+        } catch (Exception ex) {
+            return ResponseEntity.status(500).body("Error sending message: " + ex.getMessage());
+        }
     }
+
+
 
     // DTO для запросов
 

@@ -5,8 +5,7 @@ import com.example.vacancyservice.dto.VacancyDto;
 import com.example.vacancyservice.exception.NotFoundVacancyException;
 import com.example.vacancyservice.exception.RoleException;
 import com.example.vacancyservice.mapper.VacancyMapper;
-import com.example.vacancyservice.model.Company;
-import com.example.vacancyservice.model.Vacancy;
+import com.example.vacancyservice.model.*;
 import com.example.vacancyservice.service.CompanyService;
 import com.example.vacancyservice.service.VacancyService;
 import lombok.RequiredArgsConstructor;
@@ -31,13 +30,9 @@ import java.util.UUID;
 public class VacancyController {
 
     private final VacancyService vacancyService;
-
     private final CompanyService companyService;
-
     private final VacancyMapper vacancyMapper;
-
     private final S3Client s3Client;
-
     private final S3Properties props;
 
     @PostMapping
@@ -150,11 +145,44 @@ public class VacancyController {
         }
     }
 
-    @PutMapping("/{vacancyId}")
-    public ResponseEntity<?> updateVacancy(@RequestHeader("X_User_Login") String login,
-                                           @RequestHeader("X_User_Role") String role,
-                                           @PathVariable Long vacancyId,
-                                           @ModelAttribute VacancyDto form) {
+    @PostMapping(value = "/{vacancyId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> updateVacancyPost(@RequestHeader("X_User_Login") String login,
+                                               @RequestHeader("X_User_Role") String role,
+                                               @PathVariable Long vacancyId,
+                                               @RequestParam String title,
+                                               @RequestParam(required = false) String incomeLevel,
+                                               @RequestParam Busy busy,
+                                               @RequestParam(required = false) Integer experience,
+                                               @RequestParam WorkSchedule workSchedule,
+                                               @RequestParam(required = false) Integer workingHours,
+                                               @RequestParam WorkType workType) {
+        return updateVacancyInternal(login, role, vacancyId, title, incomeLevel, busy, experience, workSchedule, workingHours, workType);
+    }
+
+    // ====== ОБНОВЛЕНИЕ ВАКАНСИИ (BASIC) ЧЕРЕЗ POST (используем FormData) ======
+    // (опционально) ОБНОВЛЕНИЕ ВАКАНСИИ ЧЕРЕЗ PUT
+    @PutMapping(value = "/{vacancyId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> updateVacancyPut(@RequestHeader("X_User_Login") String login,
+                                              @RequestHeader("X_User_Role") String role,
+                                              @PathVariable Long vacancyId,
+                                              @RequestParam String title,
+                                              @RequestParam(required = false) String incomeLevel,
+                                              @RequestParam Busy busy,
+                                              @RequestParam(required = false) Integer experience,
+                                              @RequestParam WorkSchedule workSchedule,
+                                              @RequestParam(required = false) Integer workingHours,
+                                              @RequestParam WorkType workType) {
+        return updateVacancyInternal(login, role, vacancyId, title, incomeLevel, busy, experience, workSchedule, workingHours, workType);
+    }
+
+    private ResponseEntity<?> updateVacancyInternal(String login, String role, Long vacancyId,
+                                                    String title,
+                                                    String incomeLevel,
+                                                    Busy busy,
+                                                    Integer experience,
+                                                    WorkSchedule workSchedule,
+                                                    Integer workingHours,
+                                                    WorkType workType) {
         try {
             if (!"ROLE_COMPANY".equals(role)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
@@ -182,13 +210,17 @@ public class VacancyController {
                 ));
             }
 
-            vacancy.setTitle(form.getTitle());
-            vacancy.setIncomeLevel(form.getIncomeLevel());
-            vacancy.setBusy(form.getBusy());
-            vacancy.setExperience(form.getExperience());
-            vacancy.setWorkSchedule(form.getWorkSchedule());
-            vacancy.setWorkingHours(form.getWorkingHours());
-            vacancy.setWorkType(form.getWorkType());
+            vacancy.setTitle(title);
+            vacancy.setIncomeLevel(incomeLevel);
+            vacancy.setBusy(busy);
+            if (experience != null) {
+                vacancy.setExperience(experience);
+            }
+            vacancy.setWorkSchedule(workSchedule);
+            if (workingHours != null) {
+                vacancy.setWorkingHours(workingHours);
+            }
+            vacancy.setWorkType(workType);
 
             vacancyService.save(vacancy);
 
@@ -201,6 +233,8 @@ public class VacancyController {
         }
     }
 
+
+    // ====== ПОЛУЧЕНИЕ ОДНОЙ ВАКАНСИИ ДЛЯ КОМПАНИИ ======
     @GetMapping("/{vacancyId}")
     public ResponseEntity<?> getVacancyForCompany(@RequestHeader("X_User_Login") String login,
                                                   @RequestHeader("X_User_Role") String role,
@@ -225,7 +259,6 @@ public class VacancyController {
         Vacancy vacancy = vacancyService.findById(vacancyId)
                 .orElseThrow(() -> new NotFoundVacancyException("Вакансия не найдена"));
 
-        // проверяем, что вакансия принадлежит этой компании
         if (!vacancy.getCompany().getId().equals(company.getId())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
                     "error", "FOREIGN_VACANCY",
@@ -237,7 +270,7 @@ public class VacancyController {
         return ResponseEntity.ok(dto);
     }
 
-
+    // ====== СПИСОК ВАКАНСИЙ КОМПАНИИ ======
     @GetMapping("/company")
     public ResponseEntity<?> getCompanyVacancies(@RequestHeader("X_User_Login") String login,
                                                  @RequestHeader("X_User_Role") String role) {
@@ -248,7 +281,6 @@ public class VacancyController {
             ));
         }
 
-        // находим компанию по логину пользователя
         Optional<Company> companyOpt = companyService.findByUserLogin(login);
         if (companyOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
@@ -258,8 +290,6 @@ public class VacancyController {
         }
 
         Company company = companyOpt.get();
-
-        // достаём все вакансии этой компании
         List<Vacancy> vacancies = vacancyService.findByCompany(company);
 
         List<VacancyDto> dtoList = vacancies.stream()
@@ -270,7 +300,7 @@ public class VacancyController {
     }
 
 
-
+    // ====== ВСПОМОГАТЕЛЬНОЕ ======
     private String uploadFileToS3(MultipartFile file) throws IOException {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("Файл не передан");

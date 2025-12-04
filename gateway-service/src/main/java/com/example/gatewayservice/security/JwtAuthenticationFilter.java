@@ -19,7 +19,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     private final JwtService jwtService;
 
-    // эндпоинты, которые НЕ требуют токена
+    // эндпоинты, которые НЕ требуют токена вообще
     private static final List<String> openApiEndpoints = List.of(
             "/api/auth/sign-in",
             "/api/auth/sign-up",
@@ -27,29 +27,16 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
             "/api/auth/counters"
     );
 
-    private static final List<String> companyEndpoints = List.of(
-            "/api/profile/company",
-            "/api/vacancy",
-            "/api/responses",
-            "/api/chats/company"
-    );
-
-    private static final List<String> employeeEndpoints = List.of(
-            "/api/profile/employee",
-            "/api/vacancies",
-            "/api/responses",
-            "/api/chats/employee"
-    );
-
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String path = exchange.getRequest().getPath().value();
 
-        // если путь в белом списке — пропускаем без проверки
+        // 1. Белый список без авторизации
         if (isOpenEndpoint(path)) {
             return chain.filter(exchange);
         }
 
+        // 2. Читаем и проверяем JWT
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -64,16 +51,16 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
             return exchange.getResponse().setComplete();
         }
 
-        // Если токен валидный — достаём login и role и прокидываем дальше
         String login = jwtService.getLoginFromToken(token);
-        String role = jwtService.getRoleFromToken(token);
+        String role  = jwtService.getRoleFromToken(token); // "ROLE_EMPLOYEE" / "ROLE_COMPANY"
 
-        if(!startWith(path, role)){
+        // 3. Проверяем, что роль имеет доступ к этому пути
+        if (!hasAccess(path, role)) {
             exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
             return exchange.getResponse().setComplete();
         }
 
-
+        // 4. Прокидываем логин и роль в заголовки
         ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
                 .header("X-User-Login", login)
                 .header("X-User-Role", role)
@@ -86,23 +73,36 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         return openApiEndpoints.stream().anyMatch(path::startsWith);
     }
 
-    @Override
-    public int getOrder() {
-        // чем меньше число — тем раньше фильтр выполняется
-        return -1;
+    /**
+     * Правила доступа по ролям.
+     */
+    private boolean hasAccess(String path, String role) {
+
+        // -------- EMPLOYEE --------
+        if ("ROLE_EMPLOYEE".equals(role)) {
+            if (path.startsWith("/api/profile/employee")) return true;
+            if (path.startsWith("/api/vacancies"))        return true;
+            if (path.startsWith("/api/responses"))        return true;
+            // 👇 все чаты (список, сообщения и т.п.) доступны работнику
+            if (path.startsWith("/api/chats"))            return true;
+        }
+
+        // -------- COMPANY --------
+        if ("ROLE_COMPANY".equals(role)) {
+            if (path.startsWith("/api/profile/company")) return true;
+            if (path.startsWith("/api/vacancy"))         return true;
+            if (path.startsWith("/api/responses"))       return true;
+            if (path.startsWith("/api/vacancies"))        return true;
+            // 👇 все чаты доступны компании
+            if (path.startsWith("/api/chats"))           return true;
+        }
+
+        // если путь не подходит ни под одно правило – запрещаем
+        return false;
     }
 
-    private boolean startWith(String prefix, String role){
-        for(String employee : employeeEndpoints){
-            if(prefix.startsWith(employee) && "ROLE_EMPLOYEE".equals(role)){
-                return true;
-            }
-        }
-        for(String company : companyEndpoints){
-            if(prefix.startsWith(company) && "ROLE_COMPANY".equals(role)){
-                return true;
-            }
-        }
-        return false;
+    @Override
+    public int getOrder() {
+        return -1;
     }
 }

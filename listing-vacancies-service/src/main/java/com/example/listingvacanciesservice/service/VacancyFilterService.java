@@ -15,6 +15,8 @@ public class VacancyFilterService {
             return vacancies;
         }
 
+        System.out.println("DEBUG filterVacancies companyIds = " + filter.getCompanyIds());
+
         return vacancies.stream()
                 // 1. Фильтр по income (договорная / от X)
                 .filter(v -> matchesIncome(v, filter.getIncome()))
@@ -30,13 +32,24 @@ public class VacancyFilterService {
                 // 6. Фильтр по рабочим часам
                 .filter(v -> filter.getMinWorkingHours() == null || v.getWorkingHours() >= filter.getMinWorkingHours())
                 .filter(v -> filter.getMaxWorkingHours() == null || v.getWorkingHours() <= filter.getMaxWorkingHours())
-                // 7. Фильр по имени компании
-                .filter(v -> filter.getCompanyName() == null
-                        || (v.getCompany() != null
-                        && v.getCompany().getName() != null
-                        && v.getCompany().getName().equalsIgnoreCase(filter.getCompanyName())))
+                // 7. Фильтр по компаниям
+                .filter(v -> {
+                    List<Long> companyIds = filter.getCompanyIds();
+                    if (companyIds == null || companyIds.isEmpty()) {
+                        return true; // компании не выбраны — не фильтруем
+                    }
+                    Long cid = (v.getCompany() != null ? v.getCompany().getId() : null);
+                    System.out.println(
+                            "DEBUG vacancy " + v.getId()
+                                    + " companyId=" + cid
+                                    + " -> pass=" + (cid != null && companyIds.contains(cid))
+                    );
+                    if (cid == null) return false;
+                    return companyIds.contains(cid);
+                })
                 .collect(Collectors.toList());
     }
+
 
     /**
      * Логика по income:

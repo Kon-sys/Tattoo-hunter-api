@@ -57,7 +57,7 @@ public class VacancyController {
     }
 
     @GetMapping("/company")
-    public ResponseEntity<?> findAllCompany(@RequestHeader("X_User_Role") String role){
+    public ResponseEntity<?> findAllCompany(@RequestHeader("X_User_Role") String role) {
 
         if (!"ROLE_EMPLOYEE".equals(role)) {
             return ResponseEntity.badRequest().body("Invalid role");
@@ -66,14 +66,14 @@ public class VacancyController {
         List<Company> companies = companyService.findAll();
 
         List<CompanyDto> companiesDto = companies.stream()
-                .map(companyMapper::toDto)   // или .map(c -> companyMapper.toDto(c))
+                .map(companyMapper::toDto)
                 .toList();
 
-        return ResponseEntity.ok().body(companiesDto);
+        return ResponseEntity.ok(companiesDto);
     }
 
-    @GetMapping
-    @RequestMapping("/filter")
+
+    @GetMapping("/filter")
     public ResponseEntity<?> getFilteredVacancies(
             @RequestHeader("X_User_Role") String role,
             @RequestParam(required = false) String income,
@@ -84,7 +84,8 @@ public class VacancyController {
             @RequestParam(required = false) Integer maxExperience,
             @RequestParam(required = false) Integer minWorkingHours,
             @RequestParam(required = false) Integer maxWorkingHours,
-            @RequestParam(required = false) String companyName,
+            // принимаем как строки
+            @RequestParam(required = false, name = "companyIds") List<String> companyIdsRaw,
             @RequestParam(required = false, defaultValue = "id") String sortBy,
             @RequestParam(required = false, defaultValue = "asc") String sortDir
     ) {
@@ -95,7 +96,6 @@ public class VacancyController {
 
         VacancyFilter filter = new VacancyFilter();
         filter.setIncome(income);
-        filter.setCompanyName(companyName);
         filter.setBusy(busy);
         filter.setWorkSchedule(workSchedule);
         filter.setWorkType(workType);
@@ -104,12 +104,40 @@ public class VacancyController {
         filter.setMinWorkingHours(minWorkingHours);
         filter.setMaxWorkingHours(maxWorkingHours);
 
+        // 🔥 аккуратно парсим companyIdsRaw → List<Long>
+        if (companyIdsRaw != null && !companyIdsRaw.isEmpty()) {
+            List<Long> companyIds = companyIdsRaw.stream()
+                    .flatMap(s -> java.util.Arrays.stream(s.split(",")))
+                    .map(String::trim)
+                    .filter(str -> !str.isEmpty())
+                    .map(str -> {
+                        try {
+                            return Long.parseLong(str);
+                        } catch (NumberFormatException e) {
+                            System.out.println("Не получилось распарсить companyId: " + str);
+                            return null;
+                        }
+                    })
+                    .filter(id -> id != null)
+                    .toList();
+
+            System.out.println("DEBUG /filter companyIdsParsed = " + companyIds);
+            filter.setCompanyIds(companyIds);
+        } else {
+            System.out.println("DEBUG /filter companyIdsRaw = null/empty");
+        }
+
         List<Vacancy> vacancies = vacancyService.getVacanciesFiltered(filter, sortBy, sortDir);
 
-        return ResponseEntity.ok(vacancies.stream()
-                .map(vacancyMapper::toDto)
-                .toList());
+        return ResponseEntity.ok(
+                vacancies.stream()
+                        .map(vacancyMapper::toDto)
+                        .toList()
+        );
     }
+
+
+
 
     @GetMapping("/search")
     public ResponseEntity<?> searchByTitle(

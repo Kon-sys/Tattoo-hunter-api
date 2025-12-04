@@ -11,12 +11,15 @@ public class ChatClient {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    @Value("${chat.service.url:http://localhost:8084/api/chats}")
+    // тут только host:port
+    @Value("${chat.service.url:http://localhost:8086}")
     private String chatServiceUrl;
 
     public void openChat(String employeeLogin, Long companyId, Long vacancyId) {
+        String url = chatServiceUrl + "/api/chats/open";
+
         ChatOpenRequest req = new ChatOpenRequest(employeeLogin, companyId, vacancyId);
-        restTemplate.postForEntity(chatServiceUrl + "/open", req, Void.class);
+        restTemplate.postForEntity(url, req, Void.class);
     }
 
     @Data

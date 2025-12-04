@@ -6,6 +6,8 @@ import com.example.listingvacanciesservice.model.WorkType;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 public class VacancyFilter {
@@ -13,7 +15,7 @@ public class VacancyFilter {
     // "договорная" или число в строке ("5000")
     private String income;
 
-    private String companyName;
+    private List<Long> companyIds;
 
     private Busy busy;                 // точное совпадение
     private WorkSchedule workSchedule; // точное совпадение

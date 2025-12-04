@@ -25,7 +25,10 @@ public class VacancyMapper {
         dto.setWorkType(vacancy.getWorkType());
         dto.setAddInfo(vacancy.getAddInfo());
         dto.setListUrl(vacancy.getListUrl());
-        dto.setCompanyName(vacancy.getCompany().getName());
+        if (vacancy.getCompany() != null) {
+            dto.setCompanyName(vacancy.getCompany().getName());
+            dto.setCompanyId(vacancy.getCompany().getId()); // 🔥 вот это
+        }
 
         return dto;
     }

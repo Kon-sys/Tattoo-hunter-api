@@ -46,7 +46,8 @@ public class JwtService {
                     .getBody();
             return true;
         } catch (ExpiredJwtException e) {
-            log.error("Expired JwtException", e);
+            log.error("Expired JwtException");
+            return false;
         } catch (UnsupportedJwtException e) {
             log.error("Unsupported JwtException", e);
         } catch (MalformedJwtException e) {
@@ -57,17 +58,6 @@ public class JwtService {
             log.error("Invalid token", e);
         }
         return false;
-    }
-
-    // этот метод тебе напрямую в gateway не нужен, но пусть будет для симметрии
-    public String generateJwtToken(String login, String role) {
-        Date date = Date.from(LocalDateTime.now().plusMinutes(10).atZone(ZoneId.systemDefault()).toInstant());
-        return Jwts.builder()
-                .setSubject(login)
-                .claim("role", role)
-                .setExpiration(date)
-                .signWith(getSignInKey())
-                .compact();
     }
 
     private Key getSignInKey() {
