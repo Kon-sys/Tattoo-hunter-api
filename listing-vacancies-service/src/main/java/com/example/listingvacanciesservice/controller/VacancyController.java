@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/vacancies")
@@ -35,6 +37,23 @@ public class VacancyController {
         return ResponseEntity.ok().body(vacancies.stream()
                 .map(vacancyMapper::toDto)
                 .toList());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getVacancyById(@PathVariable Long id) {
+        Optional<Vacancy> vacancyOpt = vacancyService.findById(id);
+
+        if (vacancyOpt.isEmpty()) {
+            return ResponseEntity.status(404).body(
+                    Map.of(
+                            "error", "VACANCY_NOT_FOUND",
+                            "message", "Вакансия не найдена"
+                    )
+            );
+        }
+
+        VacancyDto dto = vacancyMapper.toDto(vacancyOpt.get());
+        return ResponseEntity.ok(dto);
     }
 
     @GetMapping("/company")

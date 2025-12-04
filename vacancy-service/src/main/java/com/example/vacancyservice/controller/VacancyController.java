@@ -20,6 +20,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -149,6 +150,127 @@ public class VacancyController {
         }
     }
 
+    @PutMapping("/{vacancyId}")
+    public ResponseEntity<?> updateVacancy(@RequestHeader("X_User_Login") String login,
+                                           @RequestHeader("X_User_Role") String role,
+                                           @PathVariable Long vacancyId,
+                                           @ModelAttribute VacancyDto form) {
+        try {
+            if (!"ROLE_COMPANY".equals(role)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                        "error", "INVALID_ROLE",
+                        "message", "Только компания может редактировать вакансию"
+                ));
+            }
+
+            Optional<Company> companyOpt = companyService.findByUserLogin(login);
+            if (companyOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                        "error", "COMPANY_NOT_FOUND",
+                        "message", "Профиль компании не найден"
+                ));
+            }
+
+            Vacancy vacancy = vacancyService.findById(vacancyId)
+                    .orElseThrow(() -> new NotFoundVacancyException("Вакансия не найдена"));
+
+            // проверяем, что вакансия принадлежит этой компании
+            if (!vacancy.getCompany().getId().equals(companyOpt.get().getId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                        "error", "FOREIGN_VACANCY",
+                        "message", "Вы не можете редактировать чужую вакансию"
+                ));
+            }
+
+            vacancy.setTitle(form.getTitle());
+            vacancy.setIncomeLevel(form.getIncomeLevel());
+            vacancy.setBusy(form.getBusy());
+            vacancy.setExperience(form.getExperience());
+            vacancy.setWorkSchedule(form.getWorkSchedule());
+            vacancy.setWorkingHours(form.getWorkingHours());
+            vacancy.setWorkType(form.getWorkType());
+
+            vacancyService.save(vacancy);
+
+            return ResponseEntity.ok(vacancyMapper.toDto(vacancy));
+        } catch (NotFoundVacancyException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "error", "VACANCY_NOT_FOUND",
+                    "message", e.getMessage()
+            ));
+        }
+    }
+
+    @GetMapping("/{vacancyId}")
+    public ResponseEntity<?> getVacancyForCompany(@RequestHeader("X_User_Login") String login,
+                                                  @RequestHeader("X_User_Role") String role,
+                                                  @PathVariable Long vacancyId) {
+        if (!"ROLE_COMPANY".equals(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "error", "INVALID_ROLE",
+                    "message", "Только компания может просматривать свои вакансии в этом сервисе"
+            ));
+        }
+
+        Optional<Company> companyOpt = companyService.findByUserLogin(login);
+        if (companyOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "error", "COMPANY_NOT_FOUND",
+                    "message", "Профиль компании для данного пользователя не найден"
+            ));
+        }
+
+        Company company = companyOpt.get();
+
+        Vacancy vacancy = vacancyService.findById(vacancyId)
+                .orElseThrow(() -> new NotFoundVacancyException("Вакансия не найдена"));
+
+        // проверяем, что вакансия принадлежит этой компании
+        if (!vacancy.getCompany().getId().equals(company.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "error", "FOREIGN_VACANCY",
+                    "message", "Вы не можете просматривать чужую вакансию в этом сервисе"
+            ));
+        }
+
+        VacancyDto dto = vacancyMapper.toDto(vacancy);
+        return ResponseEntity.ok(dto);
+    }
+
+
+    @GetMapping("/company")
+    public ResponseEntity<?> getCompanyVacancies(@RequestHeader("X_User_Login") String login,
+                                                 @RequestHeader("X_User_Role") String role) {
+        if (!"ROLE_COMPANY".equals(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of(
+                    "error", "INVALID_ROLE",
+                    "message", "Только компания может просматривать свои вакансии"
+            ));
+        }
+
+        // находим компанию по логину пользователя
+        Optional<Company> companyOpt = companyService.findByUserLogin(login);
+        if (companyOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                    "error", "COMPANY_NOT_FOUND",
+                    "message", "Профиль компании для данного пользователя не найден"
+            ));
+        }
+
+        Company company = companyOpt.get();
+
+        // достаём все вакансии этой компании
+        List<Vacancy> vacancies = vacancyService.findByCompany(company);
+
+        List<VacancyDto> dtoList = vacancies.stream()
+                .map(vacancyMapper::toDto)
+                .toList();
+
+        return ResponseEntity.ok(dtoList);
+    }
+
+
+
     private String uploadFileToS3(MultipartFile file) throws IOException {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("Файл не передан");
@@ -171,7 +293,7 @@ public class VacancyController {
     }
 
     private Vacancy getVacancy(String role, Long vacancyId) throws RoleException, NotFoundVacancyException {
-        if (!"ROLE_EMPLOYEE".equals(role)) {
+        if (!"ROLE_COMPANY".equals(role)) {
             throw new RoleException("Только компания может редактировать вакансию");
         }
 

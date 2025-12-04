@@ -13,4 +13,5 @@ import java.util.Optional;
 public interface VacancyRepository extends JpaRepository<Vacancy, Long> {
     List<Vacancy> findAll();
     List<Vacancy> findByTitleContainingIgnoreCase(String title);
+    Optional<Vacancy> findById(Long id);
 }

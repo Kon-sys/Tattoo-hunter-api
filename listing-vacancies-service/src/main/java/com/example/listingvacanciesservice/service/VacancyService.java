@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -74,5 +75,9 @@ public class VacancyService {
 
     public List<Vacancy> getSearched(String title){
         return vacancyRepository.findByTitleContainingIgnoreCase(title);
+    }
+
+    public Optional<Vacancy> findById(Long id) {
+        return vacancyRepository.findById(id);
     }
 }

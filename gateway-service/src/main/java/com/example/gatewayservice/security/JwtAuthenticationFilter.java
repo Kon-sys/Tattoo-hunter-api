@@ -29,7 +29,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     private static final List<String> companyEndpoints = List.of(
             "/api/profile/company",
-            "api/vacancy",
+            "/api/vacancy",
             "/api/responses",
             "/api/chats/company"
     );
