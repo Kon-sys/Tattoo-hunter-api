@@ -24,7 +24,8 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
             "/api/auth/sign-in",
             "/api/auth/sign-up",
             "/api/auth/refresh",
-            "/api/auth/counters"
+            "/api/auth/counters",
+            "/api/admin"
     );
 
     @Override
@@ -95,6 +96,10 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
             if (path.startsWith("/api/vacancies"))        return true;
             // 👇 все чаты доступны компании
             if (path.startsWith("/api/chats"))           return true;
+        }
+
+        if ("ROLE_ADMIN".equals(role)) {
+            if (path.startsWith("/api/admin")) return true;
         }
 
         // если путь не подходит ни под одно правило – запрещаем

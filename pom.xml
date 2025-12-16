@@ -24,6 +24,7 @@
         <module>listing-vacancies-service</module>
         <module>applications-service</module>
         <module>chat-service</module>
+        <module>admin-service</module>
     </modules>
 
     <properties>

@@ -37,6 +37,11 @@ spring:
           predicates:
             - Path=/api/chats/**
 
+        - id: admin-service
+          uri: http://localhost:8087
+          predicates:
+            - Path=/api/admin/**
+
       # ????????? ?????? ? http://localhost:3000 ?????? ?? gateway
       globalcors:
         corsConfigurations:
