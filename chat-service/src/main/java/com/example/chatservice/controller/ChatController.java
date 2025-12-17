@@ -8,6 +8,7 @@ import com.example.chatservice.model.Message;
 import com.example.chatservice.model.SenderRole;
 import com.example.chatservice.service.AuthClient;
 import com.example.chatservice.service.ChatService;
+import com.example.chatservice.service.UserDetailsService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +23,7 @@ public class ChatController {
 
     private final ChatService chatService;
     private final AuthClient authClient;
+    private final UserDetailsService userDetailsService;
 
     /**
      * Этот эндпоинт дергает response-service при approve отклика.
@@ -53,6 +55,13 @@ public class ChatController {
                 .map(ChatDto::from)
                 .toList();
 
+
+        for (ChatDto chatDto : result) {
+            chatDto.setVacancyName(userDetailsService.getVacancyName(chatDto.getCompanyId(), chatDto.getVacancyId()));
+            chatDto.setCompanyName(userDetailsService.getCompanyName(chatDto.getCompanyId()));
+        }
+
+
         return ResponseEntity.ok(result);
     }
 
@@ -74,6 +83,11 @@ public class ChatController {
                 .map(ChatDto::from)
                 .toList();
 
+        for (ChatDto chatDto : result) {
+            chatDto.setVacancyName(userDetailsService.getVacancyName(chatDto.getCompanyId(), chatDto.getVacancyId()));
+            chatDto.setEmployeeName(userDetailsService.getEmployeeName(chatDto.getEmployeeLogin()));
+        }
+
         return ResponseEntity.ok(result);
     }
 
@@ -93,7 +107,7 @@ public class ChatController {
                 .toList();
 
         for (MessageDto messageDto : result) {
-            System.out.println(messageDto);
+            messageDto.setSenderName(userDetailsService.getSenderName(messageDto.getSenderLogin(), messageDto.getSenderRole()));
         }
 
         return ResponseEntity.ok(result);
@@ -125,7 +139,9 @@ public class ChatController {
 
         try {
             Message msg = chatService.sendMessage(chatId, login, senderRole, request.getText());
-            return ResponseEntity.ok(MessageDto.from(msg));
+            MessageDto messageDto = MessageDto.from(msg);
+            messageDto.setSenderName(userDetailsService.getSenderName(login, senderRole));
+            return ResponseEntity.ok(messageDto);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.status(404).body(ex.getMessage());
         } catch (Exception ex) {

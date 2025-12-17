@@ -1,12 +1,15 @@
 package com.example.profileservice.controller;
 
 import com.example.profileservice.config.S3Properties;
+import com.example.profileservice.dto.CompanyDTO;
 import com.example.profileservice.dto.EmployeeDTO;
 import com.example.profileservice.dto.WorkCategoriesRequest;
 import com.example.profileservice.exception.EmptyFileException;
 import com.example.profileservice.exception.RoleException;
 import com.example.profileservice.exception.UnauthorizedException;
+import com.example.profileservice.model.Company;
 import com.example.profileservice.model.Employee;
+import com.example.profileservice.repo.CompanyRepository;
 import com.example.profileservice.service.EmployeeService;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.util.BiConsumer;
@@ -34,6 +37,8 @@ public class EmployeeProfileController {
     private final S3Client s3Client;
 
     private final S3Properties props;
+
+    private final CompanyRepository companyRepository;
 
     /*
     POST method for adding information to employee
@@ -340,6 +345,30 @@ public class EmployeeProfileController {
         }
     }
 
+
+
+    @GetMapping("/view/{companyId}")
+    public ResponseEntity<?> getCompanyProfileForEmployee(
+            @RequestHeader("X-User-Login") String requesterLogin,
+            @RequestHeader("X-User-Role") String requesterRole,
+            @PathVariable Long companyId
+    ) {
+        if (!"ROLE_EMPLOYEE".equals(requesterRole)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "INVALID_ROLE", "message", "Access denied"));
+        }
+
+        Company company = companyRepository.findById(companyId).get();
+
+        CompanyDTO dto = new CompanyDTO();
+        dto.setId(company.getId());
+        dto.setCity(company.getCity());
+        dto.setAddress(company.getAddress());
+        dto.setName(company.getName());
+        dto.setUserId(company.getUser().getId());
+
+        return ResponseEntity.ok(dto);
+    }
 
 }
 

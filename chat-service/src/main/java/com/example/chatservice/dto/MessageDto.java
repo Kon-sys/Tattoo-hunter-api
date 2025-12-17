@@ -15,6 +15,8 @@ public class MessageDto {
     private String text;
     private LocalDateTime createdAt;
 
+    private String senderName;
+
     public static MessageDto from(Message msg) {
         MessageDto dto = new MessageDto();
         dto.setId(msg.getId());

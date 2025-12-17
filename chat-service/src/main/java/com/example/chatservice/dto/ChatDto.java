@@ -12,6 +12,9 @@ public class ChatDto {
     private Long companyId;
     private Long vacancyId;
     private LocalDateTime createdAt;
+    private String companyName;
+    private String vacancyName;
+    private String employeeName;
 
     public static ChatDto from(Chat chat) {
         ChatDto dto = new ChatDto();

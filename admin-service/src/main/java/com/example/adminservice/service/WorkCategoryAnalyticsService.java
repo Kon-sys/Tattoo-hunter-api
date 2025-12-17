@@ -33,6 +33,7 @@ public class WorkCategoryAnalyticsService {
                     return new WorkCategoryUsageDto(category, count, percent);
                 })
                 .sorted(Comparator.comparingLong(WorkCategoryUsageDto::getEmployeesCount).reversed())
+                .limit(5)
                 .toList();
 
         return new WorkCategoriesPopularityDto(total, items);
