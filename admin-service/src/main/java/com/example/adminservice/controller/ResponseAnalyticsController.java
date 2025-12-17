@@ -14,7 +14,9 @@ public class ResponseAnalyticsController {
     private final ResponseAnalyticsService service;
 
     @GetMapping("/conversion")
-    public ResponseEntity<ResponseConversionDto> getConversion() {
-        return ResponseEntity.ok(service.getResponsesConversion());
+    public ResponseEntity<ResponseConversionDto> conversion(
+            @RequestParam(required = false) Long companyId
+    ) {
+        return ResponseEntity.ok(service.getResponsesConversion(companyId));
     }
 }

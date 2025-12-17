@@ -1,29 +1,16 @@
 package com.example.adminservice.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.util.Map;
 
 @Data
+@AllArgsConstructor
 public class ResponseConversionDto {
-
-    private long totalResponses;
+    private long total;
     private Map<String, Long> byStatus;
-
-    private Double approvedConversionPercent;  // APPROVED %
-    private Double rejectedPercent;             // REJECTED %
-
-    private Double avgProcessingHours;          // среднее время обработки заявки
-
-    public ResponseConversionDto(long totalResponses,
-                                 Map<String, Long> byStatus,
-                                 Double approvedConversionPercent,
-                                 Double rejectedPercent,
-                                 Double avgProcessingHours) {
-        this.totalResponses = totalResponses;
-        this.byStatus = byStatus;
-        this.approvedConversionPercent = approvedConversionPercent;
-        this.rejectedPercent = rejectedPercent;
-        this.avgProcessingHours = avgProcessingHours;
-    }
+    private Double approvedPercent;
+    private Double rejectedPercent;
+    private Double avgProcessingHours;
 }

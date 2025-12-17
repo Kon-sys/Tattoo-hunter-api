@@ -1,31 +1,22 @@
 package com.example.adminservice.model;
 
-import java.io.Serializable;
-import java.util.Objects;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
+import lombok.*;
 
+import java.io.Serializable;
+
+@Embeddable
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
 public class UserWorkCategoryId implements Serializable {
 
+    @Column(name = "user_id", nullable = false)
     private Long userId;
-    private WorkCategory workCategory;
 
-    public UserWorkCategoryId() {}
-
-    public UserWorkCategoryId(Long userId, WorkCategory workCategory) {
-        this.userId = userId;
-        this.workCategory = workCategory;
-    }
-
-    // equals/hashCode
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof UserWorkCategoryId that)) return false;
-        return Objects.equals(userId, that.userId)
-                && workCategory == that.workCategory;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(userId, workCategory);
-    }
+    @Column(name = "work_category", nullable = false)
+    private String workCategory;
 }

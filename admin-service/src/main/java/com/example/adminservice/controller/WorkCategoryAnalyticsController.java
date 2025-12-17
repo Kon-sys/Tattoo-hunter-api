@@ -11,14 +11,10 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class WorkCategoryAnalyticsController {
 
-    private final WorkCategoryAnalyticsService workCategoryAnalyticsService;
+    private final WorkCategoryAnalyticsService service;
 
-    /**
-     * GET /api/admin/analytics/categories/popularity
-     * Популярность категорий (сколько мастеров указали каждую категорию).
-     */
     @GetMapping("/popularity")
-    public ResponseEntity<WorkCategoriesPopularityDto> getCategoriesPopularity() {
-        return ResponseEntity.ok(workCategoryAnalyticsService.getCategoriesPopularity());
+    public ResponseEntity<WorkCategoriesPopularityDto> popularity() {
+        return ResponseEntity.ok(service.getCategoriesPopularity());
     }
 }

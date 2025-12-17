@@ -1,18 +1,13 @@
 package com.example.adminservice.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.util.List;
 
 @Data
+@AllArgsConstructor
 public class WorkCategoriesPopularityDto {
-
-    private long totalEmployeesWithCategories;
     private List<WorkCategoryUsageDto> items;
-
-    public WorkCategoriesPopularityDto(long totalEmployeesWithCategories,
-                                       List<WorkCategoryUsageDto> items) {
-        this.totalEmployeesWithCategories = totalEmployeesWithCategories;
-        this.items = items;
-    }
+    private long totalUsers;
 }

@@ -1,64 +1,50 @@
 package com.example.adminservice.service;
 
-import com.example.adminservice.dto.ResponseConversionDto;
-import com.example.adminservice.dto.ResponseStatusCountDto;
+import com.example.adminservice.dto.*;
 import com.example.adminservice.model.ResponseApplication;
 import com.example.adminservice.repo.ResponseApplicationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ResponseAnalyticsService {
 
-    private final ResponseApplicationRepository responseRepository;
+    private final ResponseApplicationRepository repo;
 
-    public ResponseConversionDto getResponsesConversion() {
+    public ResponseConversionDto getResponsesConversion(Long companyId) {
+        List<ResponseStatusCountDto> raw = repo.countByStatus(companyId);
 
-        // 1) Считаем по статусам
-        List<ResponseStatusCountDto> raw = responseRepository.countByStatus();
-
-        long total = raw.stream()
-                .mapToLong(ResponseStatusCountDto::getCount)
-                .sum();
-
+        long total = raw.stream().mapToLong(ResponseStatusCountDto::getCount).sum();
         Map<String, Long> byStatus = raw.stream()
-                .collect(Collectors.toMap(
-                        ResponseStatusCountDto::getStatus,
-                        ResponseStatusCountDto::getCount
-                ));
+                .collect(Collectors.toMap(ResponseStatusCountDto::getStatus, ResponseStatusCountDto::getCount));
 
-        // 2) Расчет конверсии
         long approved = byStatus.getOrDefault("APPROVED", 0L);
         long rejected = byStatus.getOrDefault("REJECTED", 0L);
 
-        Double approvedPercent = total > 0 ? (approved * 100.0 / total) : null;
-        Double rejectedPercent = total > 0 ? (rejected * 100.0 / total) : null;
+        Double approvedPercent = total > 0 ? approved * 100.0 / total : null;
+        Double rejectedPercent = total > 0 ? rejected * 100.0 / total : null;
 
-        // 3) Среднее время обработки заявки
-        List<ResponseApplication> apps = responseRepository.findAll();
+        List<ResponseApplication> all = repo.findAllForAnalytics(companyId);
 
         long sumSec = 0;
-        long countProcessed = 0;
-
-        for (ResponseApplication r : apps) {
-            if (r.getCreatedAt() != null && r.getUpdatedAt() != null) {
-                long sec = Duration.between(r.getCreatedAt(), r.getUpdatedAt()).getSeconds();
-                if (sec >= 0) {
-                    sumSec += sec;
-                    countProcessed++;
+        long processed = 0;
+        for (ResponseApplication r : all) {
+            if (r.getCreatedAt() != null && r.getUpdatedAt() != null && r.getStatus() != null) {
+                if (!"PENDING".equalsIgnoreCase(r.getStatus())) {
+                    long sec = Duration.between(r.getCreatedAt(), r.getUpdatedAt()).getSeconds();
+                    if (sec >= 0) {
+                        sumSec += sec;
+                        processed++;
+                    }
                 }
             }
         }
-
-        Double avgHours = countProcessed > 0
-                ? (sumSec / 3600.0 / countProcessed)
-                : null;
+        Double avgHours = processed > 0 ? (sumSec / 3600.0 / processed) : null;
 
         return new ResponseConversionDto(total, byStatus, approvedPercent, rejectedPercent, avgHours);
     }
